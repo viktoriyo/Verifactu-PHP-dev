@@ -75,6 +75,129 @@ class AeatClient {
         return $this;
     }
 
+
+private function simulateVerifactuResponseSimple($xml = null): UXML
+{
+    // Si quieres guardar también el XML enviado en modo simulación:
+    if ($xml !== null && method_exists($xml, 'asXML')) {
+        $this->lastRequestXml = $xml->asXML();
+    }
+
+    $rand = random_int(1, 100);
+
+    // Valores fijos para pruebas
+    $idEmisor = 'ES00000000';
+    $numSerie = 'TEST-0001';
+    $fechaExp = date('Y-m-d');
+
+    switch (true) {
+
+        case ($rand >= 1 && $rand <= 90):
+            // Alta correcta
+            $fakeResponse = <<<XML
+                <?xml version="1.0" encoding="UTF-8"?>
+                <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+                <env:Body>
+                    <tikR:RespuestaSuministro xmlns:tikR="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/RespuestaSuministro.xsd" xmlns:tik="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd">
+                    <tikR:RespuestaLinea>
+                        <tikR:EstadoRegistro>Correcto</tikR:EstadoRegistro>
+                        <tikR:Operacion>
+                        <tik:TipoOperacion>Alta</tik:TipoOperacion>
+                        </tikR:Operacion>
+                        <tikR:IDFactura>
+                        <tik:IDEmisorFactura>{$idEmisor}</tik:IDEmisorFactura>
+                        <tik:NumSerieFactura>{$numSerie}</tik:NumSerieFactura>
+                        <tik:FechaExpedicionFactura>{$fechaExp}</tik:FechaExpedicionFactura>
+                        </tikR:IDFactura>
+                    </tikR:RespuestaLinea>
+                    </tikR:RespuestaSuministro>
+                </env:Body>
+                </env:Envelope>
+                XML;
+            break;
+
+        case ($rand >= 91 && $rand <= 97):
+            // Alta aceptada con errores
+            $fakeResponse = <<<XML
+                <?xml version="1.0" encoding="UTF-8"?>
+                <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+                <env:Body>
+                    <tikR:RespuestaSuministro xmlns:tikR="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/RespuestaSuministro.xsd" xmlns:tik="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd">
+                    <tikR:RespuestaLinea>
+                        <tikR:EstadoRegistro>AceptadoConErrores</tikR:EstadoRegistro>
+                        <tikR:Operacion>
+                        <tik:TipoOperacion>Alta</tik:TipoOperacion>
+                        </tikR:Operacion>
+                        <tikR:IDFactura>
+                        <tik:IDEmisorFactura>{$idEmisor}</tik:IDEmisorFactura>
+                        <tik:NumSerieFactura>{$numSerie}</tik:NumSerieFactura>
+                        <tik:FechaExpedicionFactura>{$fechaExp}</tik:FechaExpedicionFactura>
+                        </tikR:IDFactura>
+                        <tikR:CodigoErrorRegistro>1001</tikR:CodigoErrorRegistro>
+                        <tikR:DescripcionErrorRegistro>Aviso de control (hash/firmado) — prueba</tikR:DescripcionErrorRegistro>
+                    </tikR:RespuestaLinea>
+                    </tikR:RespuestaSuministro>
+                </env:Body>
+                </env:Envelope>
+                XML;
+            break;
+
+        case ($rand >= 98 && $rand <= 99):
+            // Alta incorrecta
+            $fakeResponse = <<<XML
+                <?xml version="1.0" encoding="UTF-8"?>
+                <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+                <env:Body>
+                    <tikR:RespuestaSuministro xmlns:tikR="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/RespuestaSuministro.xsd" xmlns:tik="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd">
+                    <tikR:RespuestaLinea>
+                        <tikR:EstadoRegistro>Incorrecto</tikR:EstadoRegistro>
+                        <tikR:Operacion>
+                        <tik:TipoOperacion>Alta</tik:TipoOperacion>
+                        </tikR:Operacion>
+                        <tikR:IDFactura>
+                        <tik:IDEmisorFactura>{$idEmisor}</tik:IDEmisorFactura>
+                        <tik:NumSerieFactura>{$numSerie}</tik:NumSerieFactura>
+                        <tik:FechaExpedicionFactura>{$fechaExp}</tik:FechaExpedicionFactura>
+                        </tikR:IDFactura>
+                        <tikR:CodigoErrorRegistro>4102</tikR:CodigoErrorRegistro>
+                        <tikR:DescripcionErrorRegistro>Falta IDFactura o elemento obligatorio mal formado (prueba)</tikR:DescripcionErrorRegistro>
+                    </tikR:RespuestaLinea>
+                    </tikR:RespuestaSuministro>
+                </env:Body>
+                </env:Envelope>
+                XML;
+            break;
+
+        case ($rand >= 99 && $rand <= 100):
+            // Error de esquema: formato de fecha incorrecto + nodo inesperado
+            $badDate = date('d/m/Y');
+            $fakeResponse = <<<XML
+<?xml version="1.0" encoding="UTF-8"?>
+<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+  <env:Body>
+    <tikR:RespuestaSuministro xmlns:tikR="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/RespuestaSuministro.xsd" xmlns:tik="https://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/tike/cont/ws/SuministroInformacion.xsd">
+      <tikR:RespuestaLinea>
+        <tikR:IDFactura>
+          <tik:IDEmisorFactura>{$idEmisor}</tik:IDEmisorFactura>
+          <tik:NumSerieFactura>{$numSerie}</tik:NumSerieFactura>
+          <tik:FechaExpedicionFactura>{$badDate}</tik:FechaExpedicionFactura>
+          <tikR:CampoInvalido>NO_VALIDO</tikR:CampoInvalido>
+        </tikR:IDFactura>
+      </tikR:RespuestaLinea>
+    </tikR:RespuestaSuministro>
+  </env:Body>
+</env:Envelope>
+XML;
+            break;
+    }
+
+    // Muy importante: quitar espacios en blanco al principio/fin
+    return UXML::fromString(trim($fakeResponse));
+}
+
+
+
+
     /**
      * Send registration records
      *
@@ -229,7 +352,11 @@ class AeatClient {
             $registroElement->add('sum1:Huella', $record->hash);
         }
 
-        // Send request
+
+       //return $this->simulateVerifactuResponseSimple($xml);
+
+        
+       // Send request
         $response = $this->client->post('/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP', [
             'base_uri' => $this->getBaseUri(),
             'headers' => ['Content-Type' => 'text/xml'],
@@ -294,16 +421,6 @@ class AeatClient {
                 $importeRectificacion->add('sum1:CuotaRectificada', $record->rectifiedTaxAmount);
                 //$importeRectificacion->add('sum1:FechaOperacion', $record->operationDate);
             }
-
-            //$registroElement->add('sum1:FechaOperacion', $record->operationDate); //TODO: CUIDADO ESTO ES FORZADO
-
-           /* $tieneExento = count(array_filter($record->breakdown, fn($detalle) =>!empty($detalle->exemptReasonCode))) > 0;
-
-            //fecha operacion
-            if($record->operationDate && !$tieneExento){
-                $fechaOp = date('d-m-Y', strtotime($record->operationDate));
-                !empty($registroElement->add('sum1:FechaOperacion', $fechaOp));
-            }*/
 
             $registroElement->add('sum1:DescripcionOperacion', $record->description);
 
@@ -383,7 +500,7 @@ class AeatClient {
             $registroElement->add('sum1:Huella', $record->hash);
 
         }
-
+ 
         $response = $this->client->post('/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP', [
             'base_uri' => $this->getBaseUri(),
             'headers'  => ['Content-Type' => 'text/xml'],
@@ -457,6 +574,7 @@ class AeatClient {
 
         }
 
+  
         $response = $this->client->post('/wlpl/TIKE-CONT/ws/SistemaFacturacion/VerifactuSOAP', [
             'base_uri' => $this->getBaseUri(),
             'headers'  => ['Content-Type' => 'text/xml'],

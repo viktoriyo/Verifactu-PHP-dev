@@ -44,6 +44,6 @@ class FiscalIdentifier extends Model {
      * @field NIF
      */
     #[Assert\NotBlank]
-    #[Assert\Length(exactly: 9)]
+    #[Assert\Length(min:8, max: 9)] //exactly: 9
     public string $nif;
 }
