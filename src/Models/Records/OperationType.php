@@ -3,10 +3,10 @@ namespace josemmo\Verifactu\Models\Records;
 
 enum OperationType: string {
     /** Operación sujeta y no exenta - Sin inversión del sujeto pasivo */
-    case Subject = 'S1';
+    case S1 = 'S1';
 
     /** Operación sujeta y no exenta - Con inversión del sujeto pasivo */
-    case PassiveSubject = 'S2';
+    case S2 = 'S2';
 
     /** Operación no sujeta - Artículos 7, 14 y otros */
     case NonSubject = 'N1';
@@ -38,7 +38,7 @@ enum OperationType: string {
      * @return bool Whether is a subject operation type
      */
     public function isSubject(): bool {
-        return ($this === self::Subject || $this === self::PassiveSubject);
+        return ($this === self::S1 || $this === self::S2);
     }
 
     /**
